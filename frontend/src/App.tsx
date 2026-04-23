@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-function App() {
-  const [wallets, setWallets] = useState([]);
-  const [userId, setUserId] = useState("");
-  const [balance, setBalance] = useState("");
-  const [currency, setCurrency] = useState("");
+interface Wallet {
+  id: number;
+  userId: string;
+  balance: number;
+  currency: string;
+}
 
-  const fetchWallets = () => {
-    axios.get("http://localhost:8080/api/wallets")
+function App() {
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [userId, setUserId] = useState<string>("");
+  const [balance, setBalance] = useState<string>("");
+  const [currency, setCurrency] = useState<string>("");
+
+  const fetchWallets = (): void => {
+  axios.get<Wallet[]>("http://localhost:8080/api/wallets")
       .then(res => {
         setWallets(res.data);
       })
@@ -21,7 +28,7 @@ function App() {
     fetchWallets();
   }, []);
 
-  const handleCreateWallet = (e) => {
+  const handleCreateWallet = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
 
     const newWallet = {
@@ -53,35 +60,35 @@ function App() {
             type="text"
             placeholder="Enter user id"
             value={userId}
-            onChange={(e) => setUserId(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+              setUserId(e.target.value)}
           />
         </div>
-
         <div>
           <input
             type="number"
             placeholder="Enter balance"
             value={balance}
-            onChange={(e) => setBalance(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+              setBalance(e.target.value)}
           />
         </div>
-
         <div>
           <input
             type="text"
             placeholder="Enter currency"
             value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+              setCurrency(e.target.value)}
           />
         </div>
-
         <button type="submit">Create Wallet</button>
       </form>
 
       <hr />
 
       <h2>Wallet List</h2>
-      {wallets.map(wallet => (
+      {wallets.map((wallet: Wallet) => (
         <div key={wallet.id}>
           <p>User: {wallet.userId}</p>
           <p>Balance: {wallet.balance}</p>
