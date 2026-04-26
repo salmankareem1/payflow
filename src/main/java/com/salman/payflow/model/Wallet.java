@@ -3,23 +3,33 @@ package com.salman.payflow.model;
 
 import java.math.BigDecimal;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 
 @Entity
+@Table(name="wallet")
 public class Wallet {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	
+	
 	@NotBlank(message="User Id cannot be blank")
+	@Column(name="user_Id",nullable=false)
 	private String userId;
+	
+	@Column(precision=16,scale=4,nullable=false)
 	private BigDecimal balance;
+	
 	@NotBlank(message="Currency cannot be blank")
+	@Column(nullable=false,length=10)
 	private String currency;
 	@Version
 	private Long version;
@@ -27,7 +37,7 @@ public class Wallet {
 	public Wallet() {
 	}
 	
-	public Wallet(long id, String userId, BigDecimal balance, String currency,Long version) {
+	public Wallet(Long id, String userId, BigDecimal balance, String currency,Long version) {
 		this.id=id;
 		this.userId=userId;
 		this.balance=balance;
@@ -35,11 +45,11 @@ public class Wallet {
         this.version=version;
 		
 	}
-	public long getId() {
+	public Long getId() {
 		return id;
 	}
 	
-	public void setId(long id) {
+	public void setId(Long id) {
 		this.id=id;
 	}
 	

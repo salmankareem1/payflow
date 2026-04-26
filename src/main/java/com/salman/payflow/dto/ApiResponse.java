@@ -24,7 +24,7 @@ public class ApiResponse<T> {
 		this.data=data;
 	}
 	
-	public T getdata() {
+	public T getData() {
 		return data;
 	}
 }

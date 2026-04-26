@@ -4,6 +4,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Jwts;
@@ -12,20 +15,27 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtService {
 
-	private static final String SECRET= "payflow-secret-key-payflow-secret-key-123456";
-	private static final long EXPIRATION=1000*60*60;
+	
+	private static final Logger log = LoggerFactory.getLogger(JwtService.class);
+	
+	@Value("${app.jwt.secret}")
+	private String secret;
+	
+	@Value("${app.jwt.expiration-ms}")
+	private long expirationMs;
+	
 	
 	
 	
 	private Key getSigningKey() {
-		return Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+		return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
 	}
 	
 	public String generateToken(String username) {
 		return Jwts.builder()
 				.setSubject(username)
 				.setIssuedAt(new Date())
-				.setExpiration(new Date(System.currentTimeMillis()+ EXPIRATION))
+				.setExpiration(new Date(System.currentTimeMillis()+ expirationMs))
 		        .signWith(getSigningKey())
 		        .compact();
 		
@@ -50,6 +60,7 @@ public class JwtService {
 			return true;
 			
 		} catch (Exception e) {
+			log.warn("JWT validation failed: {}", e.getMessage());
 			return false;
 		}
 	}

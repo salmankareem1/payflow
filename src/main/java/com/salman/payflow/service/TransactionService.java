@@ -2,21 +2,24 @@ package com.salman.payflow.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.salman.payflow.model.Transaction;
 import com.salman.payflow.model.Wallet;
 import com.salman.payflow.repository.TransactionRepository;
 import com.salman.payflow.repository.WalletRepository;
 
-import jakarta.transaction.Transactional;
 
 @Service
-@Transactional
+@Transactional(rollbackFor=Exception.class)
 public class TransactionService {
-	//private final Transaction transaction;
+	private static final Logger log= LoggerFactory.getLogger(TransactionService.class);
 	                         
 	private final TransactionRepository transactionRepository;
 	private final WalletRepository walletRepository;
@@ -35,11 +38,15 @@ public class TransactionService {
 		
 		try {
 		
-		String referenceId="TXN-"+System.currentTimeMillis();
+		
+		
+		if(amount ==null||amount.compareTo(BigDecimal.ZERO)<=0)
 		
 		if(fromId==toId) {
 			throw new RuntimeException("Sender and receiver cannot be same");
 		}
+		
+		String referenceId="TXN-"+UUID.randomUUID();
 		
 		Wallet from = walletRepository.findById(fromId).orElseThrow(()->new RuntimeException("The Sender not found"));	
 		Wallet to = walletRepository.findById(toId).orElseThrow(()->new RuntimeException("The Receiver not found"));	
@@ -71,9 +78,13 @@ public class TransactionService {
 		tx.setReferenceId(referenceId);
 		
 		transactionRepository.save(tx);
+		log.info("Transfer completed: {} -> {}, amount: {}, ref: {}", fromId, toId, amount, referenceId);
+		
+		return ;
 			
 	}catch (ObjectOptimisticLockingFailureException e) {
 		attempt++;
+		log.warn("Optimistic lock conflict on attempt {}/{}", attempt, maxRetries);
 	
 		if (attempt >= maxRetries) {
             throw new RuntimeException("Transaction failed due to concurrent updates. Please retry");
