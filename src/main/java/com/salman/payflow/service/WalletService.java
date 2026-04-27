@@ -1,7 +1,12 @@
 package com.salman.payflow.service;
 
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 import java.util.*;
+
+import com.salman.payflow.dto.CreateWalletRequest;
+import com.salman.payflow.exception.WalletNotFoundException;
 import com.salman.payflow.model.Wallet;
 import com.salman.payflow.repository.WalletRepository;
 
@@ -16,7 +21,11 @@ public class WalletService {
 		
 	}
 	
-	public Wallet createWallet(Wallet wallet) {
+	public Wallet createWallet(CreateWalletRequest createWalletRequest) {
+		Wallet wallet = new Wallet();
+		wallet.setUserId(createWalletRequest.getUserId());
+		wallet.setCurrency(createWalletRequest.getCurrency());
+		wallet.setBalance(BigDecimal.ZERO);
 		return walletRepository.save(wallet);
 		
 	}
@@ -26,11 +35,11 @@ public class WalletService {
 	}
 	
 	public Wallet getWalletById(long id) {
-		return walletRepository.findById(id).orElseThrow(()-> new RuntimeException("Wallet not found"));
+		return walletRepository.findById(id).orElseThrow(()-> new WalletNotFoundException(id));
 	}
 	
 	public Wallet updateWallet(long id, Wallet updatedWallet) {
-		Wallet wallet= walletRepository.findById(id).orElseThrow(()-> new RuntimeException("Wallet not found"));
+		Wallet wallet= walletRepository.findById(id).orElseThrow(()-> new WalletNotFoundException(id));
 		
 			wallet.setUserId(updatedWallet.getUserId());
 			wallet.setBalance(updatedWallet.getBalance());
@@ -41,7 +50,7 @@ public class WalletService {
 	
 	public void deleteWallet(long id)
 	{
-		Wallet wallet = walletRepository.findById(id).orElseThrow(()-> new RuntimeException("Wallet not found"));
+		Wallet wallet = walletRepository.findById(id).orElseThrow(()-> new WalletNotFoundException(id));
 				walletRepository.delete(wallet);
 	}
 	

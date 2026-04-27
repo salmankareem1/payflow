@@ -10,6 +10,10 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.salman.payflow.exception.CurrencyMismatchException;
+import com.salman.payflow.exception.InsufficientFundsException;
+import com.salman.payflow.exception.SameWalletException;
+import com.salman.payflow.exception.WalletNotFoundException;
 import com.salman.payflow.model.Transaction;
 import com.salman.payflow.model.Wallet;
 import com.salman.payflow.repository.TransactionRepository;
@@ -40,28 +44,27 @@ public class TransactionService {
 		
 		
 		
-		if(amount ==null||amount.compareTo(BigDecimal.ZERO)<=0)
+		if(amount ==null||amount.compareTo(BigDecimal.ZERO)<=0) {
+			throw new RuntimeException("Amount must be greater than zero");
+		}
 		
 		if(fromId==toId) {
-			throw new RuntimeException("Sender and receiver cannot be same");
+			throw new SameWalletException();
 		}
 		
 		String referenceId="TXN-"+UUID.randomUUID();
 		
-		Wallet from = walletRepository.findById(fromId).orElseThrow(()->new RuntimeException("The Sender not found"));	
-		Wallet to = walletRepository.findById(toId).orElseThrow(()->new RuntimeException("The Receiver not found"));	
+		Wallet from = walletRepository.findById(fromId).orElseThrow(()->new WalletNotFoundException(fromId));	
+		Wallet to = walletRepository.findById(toId).orElseThrow(()->new WalletNotFoundException(toId));	
 		
 		if (!from.getCurrency().equals(to.getCurrency())) {
-		    throw new RuntimeException("Transfer between different currencies is not allowed");
+		    throw new CurrencyMismatchException(from.getCurrency(),to.getCurrency());
 		}
 		
 		if(from.getBalance().compareTo(amount)<0) {
-			throw new RuntimeException("Insufficient Balance");
+			throw new InsufficientFundsException();
 		}
 		
-		if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-		    throw new RuntimeException("Amount must be greater than zero");
-		}
 		
 		from.setBalance((from.getBalance().subtract(amount)));
 		to.setBalance(to.getBalance().add(amount));

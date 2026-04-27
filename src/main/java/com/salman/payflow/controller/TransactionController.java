@@ -3,7 +3,7 @@ package com.salman.payflow.controller;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,7 +21,6 @@ import com.salman.payflow.service.TransactionService;
 import jakarta.validation.Valid;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/api")
 public class TransactionController {
 private final TransactionService transactionService;
@@ -32,28 +31,28 @@ public TransactionController(TransactionService transactionService,NotificationS
 	this.notificationService=notificationService;
 }
 
-	
+// 200 OK for a successful transfer
 @PostMapping("/transaction")
-public ApiResponse<String> transfer(@Valid @RequestBody TransferRequest request) {
+public ResponseEntity<ApiResponse<String>> transfer(@Valid @RequestBody TransferRequest request) {
 	transactionService.transfer(request.getFromWalletId(), request.getToWalletId(), request.getAmount());
 	notificationService.sendTransferNotification(request.getFromWalletId(), request.getToWalletId(), request.getAmount());	
-	return new ApiResponse<>("Transaction completed successfully", "SUCCESS");
+	return ResponseEntity.ok(new ApiResponse<>("Transaction completed successfully",null));
 	
 }
 
+// 200 OK
 @GetMapping("/transactions")
-public ApiResponse<List<TransactionResponse>> getAllTransactions(){
+public ResponseEntity<ApiResponse<List<TransactionResponse>>> getAllTransactions(){
    List<TransactionResponse> transactions = transactionService.getAllTransactions().stream().map(this::mapToTransactionResponse).collect(Collectors.toList());
-	
-	return new ApiResponse<>("Transactions fetched successfully", transactions);
+   return ResponseEntity.ok(new ApiResponse<>("Transactions fetched successfully",transactions));
 }
-
+//200 OK — 404 handled by WalletNotFoundException if wallet doesn't exist
 @GetMapping("/wallet/{id}/transactions")
-public ApiResponse<List<TransactionResponse>> getTransactionsByWalletId(@PathVariable Long id) {
+public ResponseEntity<ApiResponse<List<TransactionResponse>>> getTransactionsByWalletId(@PathVariable Long id) {
 	List<TransactionResponse> transactions= transactionService.getTransactionsByWalletId(id).stream().map(this::mapToTransactionResponse).collect(Collectors.toList());
-    return new ApiResponse<>("Wallet transactions fetched successfully", transactions);
+	return ResponseEntity.ok(new ApiResponse<>("Wallet transactions fetched successfully",transactions));
 }
- public TransactionResponse mapToTransactionResponse(Transaction transaction) {
+ private TransactionResponse mapToTransactionResponse(Transaction transaction) {
 	 return new TransactionResponse(
              transaction.getId(),
              transaction.getFromWalletId(),
