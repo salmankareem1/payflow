@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.salman.payflow.dto.ApiResponse;
 import com.salman.payflow.dto.TransactionResponse;
 import com.salman.payflow.dto.TransferRequest;
+import com.salman.payflow.event.TransactionEvent;
+import com.salman.payflow.event.TransactionEventPublisher;
 import com.salman.payflow.model.Transaction;
 import com.salman.payflow.service.NotificationService;
 import com.salman.payflow.service.TransactionService;
@@ -25,16 +27,26 @@ import jakarta.validation.Valid;
 public class TransactionController {
 private final TransactionService transactionService;
 private final NotificationService notificationService;
+private final TransactionEventPublisher eventPublisher;
 	
-public TransactionController(TransactionService transactionService,NotificationService notificationService) {
+public TransactionController(TransactionService transactionService,NotificationService notificationService, TransactionEventPublisher eventPublisher) {
 	this.transactionService=transactionService;
 	this.notificationService=notificationService;
+	this.eventPublisher=eventPublisher;
 }
 
 // 200 OK for a successful transfer
 @PostMapping("/transaction")
 public ResponseEntity<ApiResponse<String>> transfer(@Valid @RequestBody TransferRequest request) {
 	transactionService.transfer(request.getFromWalletId(), request.getToWalletId(), request.getAmount());
+	TransactionEvent event = new TransactionEvent( request.getFromWalletId(),
+            request.getToWalletId(),
+            request.getAmount(),
+            "TXN-" + java.util.UUID.randomUUID(),
+            "SUCCESS");
+	
+	eventPublisher.publish(event);
+	
 	notificationService.sendTransferNotification(request.getFromWalletId(), request.getToWalletId(), request.getAmount());	
 	return ResponseEntity.ok(new ApiResponse<>("Transaction completed successfully",null));
 	

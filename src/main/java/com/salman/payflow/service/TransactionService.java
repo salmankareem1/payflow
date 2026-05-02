@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.salman.payflow.exception.CurrencyMismatchException;
 import com.salman.payflow.exception.InsufficientFundsException;
 import com.salman.payflow.exception.SameWalletException;
@@ -21,19 +20,20 @@ import com.salman.payflow.repository.WalletRepository;
 
 
 @Service
-@Transactional(rollbackFor=Exception.class)
 public class TransactionService {
 	private static final Logger log= LoggerFactory.getLogger(TransactionService.class);
 	                         
 	private final TransactionRepository transactionRepository;
 	private final WalletRepository walletRepository;
+//	private final TransactionEventPublisher transactionEventPublisher;
 	
 	public TransactionService(TransactionRepository transactionRepository, WalletRepository walletrepository) {
 		this.transactionRepository=transactionRepository;
 		this.walletRepository=walletrepository;
+	//	this.transactionEventPublisher=transactionEventPublisher;
 	}
-
-	public void transfer(long fromId,long toId, BigDecimal amount) {
+	@Transactional(rollbackFor=Exception.class)
+	public void transfer(Long fromId,Long toId, BigDecimal amount) {
 		
 		int maxRetries=3;
 		int attempt =0;
@@ -81,6 +81,12 @@ public class TransactionService {
 		tx.setReferenceId(referenceId);
 		
 		transactionRepository.save(tx);
+		 
+//		TransactionEvent event = new TransactionEvent(fromId, toId, amount, referenceId, "SUCCESS");
+//		
+//		transactionEventPublisher.publish(event);
+		
+		
 		log.info("Transfer completed: {} -> {}, amount: {}, ref: {}", fromId, toId, amount, referenceId);
 		
 		return ;
