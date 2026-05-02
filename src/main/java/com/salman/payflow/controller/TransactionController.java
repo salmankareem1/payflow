@@ -17,7 +17,6 @@ import com.salman.payflow.dto.TransferRequest;
 import com.salman.payflow.event.TransactionEvent;
 import com.salman.payflow.event.TransactionEventPublisher;
 import com.salman.payflow.model.Transaction;
-import com.salman.payflow.service.NotificationService;
 import com.salman.payflow.service.TransactionService;
 
 import jakarta.validation.Valid;
@@ -26,12 +25,10 @@ import jakarta.validation.Valid;
 @RequestMapping("/api")
 public class TransactionController {
 private final TransactionService transactionService;
-private final NotificationService notificationService;
 private final TransactionEventPublisher eventPublisher;
 	
-public TransactionController(TransactionService transactionService,NotificationService notificationService, TransactionEventPublisher eventPublisher) {
+public TransactionController(TransactionService transactionService, TransactionEventPublisher eventPublisher) {
 	this.transactionService=transactionService;
-	this.notificationService=notificationService;
 	this.eventPublisher=eventPublisher;
 }
 
@@ -47,7 +44,7 @@ public ResponseEntity<ApiResponse<String>> transfer(@Valid @RequestBody Transfer
 	
 	eventPublisher.publish(event);
 	
-	notificationService.sendTransferNotification(request.getFromWalletId(), request.getToWalletId(), request.getAmount());	
+		
 	return ResponseEntity.ok(new ApiResponse<>("Transaction completed successfully",null));
 	
 }
