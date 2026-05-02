@@ -1,5 +1,7 @@
 package com.salman.payflow.service;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -33,11 +35,11 @@ public class WalletService {
 	public List<Wallet> getAllWallets(){
 		return walletRepository.findAll();
 	}
-	
+	@Cacheable(value = "wallets", key = "#id")
 	public Wallet getWalletById(long id) {
 		return walletRepository.findById(id).orElseThrow(()-> new WalletNotFoundException(id));
 	}
-	
+	@CacheEvict(value = "wallets", key = "#id")
 	public Wallet updateWallet(long id, Wallet updatedWallet) {
 		Wallet wallet= walletRepository.findById(id).orElseThrow(()-> new WalletNotFoundException(id));
 		
@@ -47,7 +49,7 @@ public class WalletService {
 			return walletRepository.save(wallet);
 			
 	}
-	
+	@CacheEvict(value = "wallets", key = "#id")
 	public void deleteWallet(long id)
 	{
 		Wallet wallet = walletRepository.findById(id).orElseThrow(()-> new WalletNotFoundException(id));
