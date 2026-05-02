@@ -17,6 +17,8 @@ Every design decision has a reason behind it.
 - Spring Security, JWT (JJWT)
 - Spring Data JPA, Hibernate
 - PostgreSQL
+- Apache Kafka (KRaft mode)
+- Redis
 - Maven
 
 **Frontend**
@@ -24,9 +26,9 @@ Every design decision has a reason behind it.
 - React, TypeScript
 - Axios
 
-**Infrastructure (in progress)**
+**Infrastructure**
 
-- Docker
+- Docker (Kafka + Redis via docker-compose)
 - AWS (EC2, S3)
 
 ## Getting Started
@@ -165,7 +167,7 @@ Actively in development.
 
 - ✅ Phase 1 — Bug fixes and production hardening
 - ✅ Phase 2 — Custom exceptions, ResponseEntity, DTO layer, centralised CORS
-- 🔄 Phase 3 — Swagger/OpenAPI, Kafka event publishing, Redis caching
+- ✅ Phase 3 — Swagger/OpenAPI, Kafka event publishing, Redis caching
 - ⏳ Phase 4 — React TypeScript frontend complete
 - ⏳ Phase 5 — Docker, deployment
 
