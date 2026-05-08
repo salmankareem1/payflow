@@ -13,26 +13,14 @@ public class CorsConfig {
 
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration config= new CorsConfiguration();
-		
-		 // which frontend origins are allowed to call this API
-		config.setAllowedOrigins(List.of("http://localhost:3000"));
-		
-		// which HTTP methods are allowed
-		config.setAllowedHeaders(List.of("GET","POST","PUT","DELETE","OPTIONS"));
-		
-		// which headers the client is allowed to send
-		config.setAllowedHeaders(List.of("*"));
-		
-		//  // allow the Authorization header to be sent — needed for JWT
-		config.setAllowCredentials(true);
-		
-		// apply this config to every endpoint in the application
-		UrlBasedCorsConfigurationSource source= new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", config);
-		
-		return source;
-		
+	    CorsConfiguration config = new CorsConfiguration();
+	    config.setAllowedOrigins(List.of("http://localhost:3000"));
+	    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+	    config.setAllowedHeaders(List.of("*"));
+	    config.setAllowCredentials(true);
+	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+	    source.registerCorsConfiguration("/**", config);
+	    return source;
 	}
 	
 }
