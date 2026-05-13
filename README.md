@@ -2,7 +2,7 @@
 
 A production-grade payments API built with Java 17 and Spring Boot 3.
 
-Covers the core concerns of a real financial backend — atomic fund transfers,
+Covers the core concerns of a real financial backend: atomic fund transfers,
 concurrent request handling, JWT-based authentication, and a clean REST API
 with proper HTTP semantics throughout.
 
@@ -23,13 +23,16 @@ Every design decision has a reason behind it.
 
 **Frontend**
 
-- React, TypeScript
+- React 19, TypeScript
+- Tailwind CSS
 - Axios
+- React Router v6
+- React Testing Library
 
 **Infrastructure**
 
 - Docker (Kafka + Redis via docker-compose)
-- AWS (EC2, S3)
+- AWS (EC2, S3) — planned
 
 ## Getting Started
 
@@ -38,12 +41,20 @@ Every design decision has a reason behind it.
 - Java 17+
 - PostgreSQL running locally
 - Maven
+- Node.js 18+
+- Docker Desktop (for Kafka and Redis)
 
 ### Run Locally
 
 ```bash
 git clone https://github.com/salmankareem1/payflow.git
 cd payflow
+```
+
+Start Kafka and Redis:
+
+```bash
+docker-compose up -d
 ```
 
 Create a database named `payflowdb` in PostgreSQL, then configure
@@ -57,13 +68,13 @@ app.jwt.secret=your-secret-key-minimum-32-characters
 app.jwt.expiration-ms=3600000
 ```
 
-Run the application:
+Run the backend:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-Frontend:
+Run the frontend:
 
 ```bash
 cd frontend
@@ -73,6 +84,7 @@ npm start
 
 API runs on `http://localhost:8080`.
 Frontend runs on `http://localhost:3000`.
+Swagger UI available at `http://localhost:8080/swagger-ui.html`.
 
 ## API Reference
 
@@ -108,7 +120,7 @@ Authorization header: `Authorization: Bearer <token>`
 Fund transfers are the core of PayFlow. Three things make them reliable.
 
 **Atomicity**
-Every transfer involves three database writes — debit the sender, credit
+Every transfer involves three database writes: debit the sender, credit
 the receiver, record the transaction. All three are wrapped in a single
 @Transactional boundary. If anything fails mid-transfer, all writes are
 rolled back. No partial state is ever committed to the database.
@@ -123,7 +135,7 @@ UPDATE wallet SET balance = ?, version = ? WHERE id = ? AND version = ?
 
 If two concurrent transfers both read version 5 and race to save, the first
 succeeds and increments the version to 6. The second update matches zero rows
-because the version is no longer 5 — Hibernate throws
+because the version is no longer 5. Hibernate throws
 ObjectOptimisticLockingFailureException. The service catches this and retries
 up to three times before returning an error to the caller. Money cannot be
 double-spent.
@@ -133,11 +145,24 @@ Every transaction is assigned a UUID-based reference ID generated server-side.
 This gives every transfer a unique, traceable identifier independent of the
 database primary key.
 
+**Kafka Event Publishing**
+After every successful transfer, a TransactionEvent is published to the
+`payflow.transaction.events` Kafka topic. The transfer service has no
+knowledge of downstream consumers. Notification, fraud detection, and
+analytics services can subscribe independently. Events are persisted to
+disk and survive application restarts.
+
+**Redis Caching**
+Wallet lookups are cached in Redis using @Cacheable. Cache entries are
+evicted on every update or delete using @CacheEvict. Wallet balances
+during transfers are deliberately excluded from the cache to preserve
+the integrity of the optimistic locking mechanism.
+
 ## Error Handling
 
 The API returns specific HTTP status codes for every error condition.
 A single @RestControllerAdvice handler maps each exception type to the
-correct response — nothing returns 400 when a 404 or 500 is appropriate.
+correct response.
 
 | Scenario                | Status Code               |
 | ----------------------- | ------------------------- |
@@ -153,13 +178,58 @@ correct response — nothing returns 400 when a 404 or 500 is appropriate.
 
 - JWT tokens are validated on every request via a filter that runs before
   the Spring Security authorisation layer
-- The JWT secret is injected via @Value from application.properties —
+- The JWT secret is injected via @Value from application.properties,
   never hardcoded in source
-- Wallet creation accepts only userId and currency from the client —
-  balance is always initialised to zero server-side
-- CSRF protection is disabled — correct for a stateless REST API using
+- Wallet creation accepts only userId and currency from the client.
+  Balance is always initialised to zero server-side
+- CSRF protection is disabled, correct for a stateless REST API using
   token-based authentication
 - CORS is configured centrally via a CorsConfigurationSource bean
+
+## Testing
+
+**Backend** — JUnit 5 + Mockito — 17 tests
+
+TransactionService (10 tests):
+
+- Successful transfer with correct balance updates verified
+- Insufficient funds: exception thrown, no database writes
+- Same wallet rejection before any database call
+- Null, zero, and negative amount validation
+- Sender and receiver not found
+- Currency mismatch: no database writes
+- Exact balance transfer edge case
+
+WalletService (7 tests):
+
+- Get wallet by ID: found and not found
+- Get all wallets
+- Delete wallet: exists and not found
+- Update wallet: exists and not found
+
+**Frontend** — React Testing Library — 7 tests
+
+LoginPage (7 tests):
+
+- Form renders correctly
+- User input on username and password fields
+- Loading state during form submission
+- Successful login redirect and token storage in sessionStorage
+- 401 error message displayed correctly
+- 500 generic error message displayed correctly
+
+## Frontend
+
+The React TypeScript frontend provides a complete interface for PayFlow.
+
+- Login page with JWT authentication flow
+- Protected routes, redirect to login if unauthenticated
+- Dashboard with wallet cards showing live balances
+- Create wallet form
+- Transfer funds form with success and error feedback
+- Recent transactions table with reference IDs and status badges
+- Token stored in sessionStorage, cleared on logout
+- Axios interceptor attaches JWT to every request automatically
 
 ## Project Status
 
@@ -168,8 +238,9 @@ Actively in development.
 - ✅ Phase 1 — Bug fixes and production hardening
 - ✅ Phase 2 — Custom exceptions, ResponseEntity, DTO layer, centralised CORS
 - ✅ Phase 3 — Swagger/OpenAPI, Kafka event publishing, Redis caching
-- ⏳ Phase 4 — React TypeScript frontend complete
-- ⏳ Phase 5 — Docker, deployment
+- ✅ Phase 4 — React TypeScript frontend, JWT auth flow, dashboard
+- ✅ Phase 5 — Unit tests, JUnit 5 backend, React Testing Library frontend
+- ⏳ Phase 6 — Docker full stack, deployment
 
 ## Author
 
