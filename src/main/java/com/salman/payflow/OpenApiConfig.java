@@ -1,5 +1,7 @@
 package com.salman.payflow;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -9,6 +11,7 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 
 @Configuration
 public class OpenApiConfig {
@@ -16,6 +19,11 @@ public class OpenApiConfig {
 	@Bean
 	public OpenAPI payflowOpenApi() {
 		return new OpenAPI()
+				
+				.servers(List.of(
+                        new Server().url("https://payflow-production-0543.up.railway.app")
+                ))
+				
 				.info(new Info().title("Payflow API")
 			    .version("v1")
 			    .description("Production-grade payments API — wallet management,"
