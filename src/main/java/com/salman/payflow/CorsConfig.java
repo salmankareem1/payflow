@@ -10,7 +10,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class CorsConfig {
 
-	@Value("${cors.allowed.origins:http://localhost:3000}")
+	@Value("${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,https://payflow-iota-eight.vercel.app}")
 	private String allowedOrigins;
 
     @Bean
